@@ -42,6 +42,18 @@ bun run dev
 Open [http://localhost:3001](http://localhost:3001) in your browser to see the web application.
 Your app will connect to the Convex cloud backend automatically.
 
+## Google OAuth Setup
+
+1. Create a Google Cloud project and configure the OAuth consent screen
+2. Create OAuth 2.0 credentials (Web application type)
+3. Add the redirect URI: `https://<your-convex-deployment>.convex.site/api/auth/callback/google`
+4. Set the environment variables in Convex:
+
+```bash
+npx convex env set GOOGLE_CLIENT_ID <your-client-id>
+npx convex env set GOOGLE_CLIENT_SECRET <your-client-secret>
+```
+
 ## Git Hooks and Formatting
 
 - Initialize hooks: `bun run prepare`

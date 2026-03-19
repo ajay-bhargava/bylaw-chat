@@ -19,8 +19,8 @@
         "Typecheck passes: bun run check-types (or tsc --noEmit in apps/web)"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Deleted dashboard/, sign-in-form, sign-up-form, user-menu, healthCheck, privateData. Cleaned header, replaced page.tsx with placeholder."
     },
     {
       "id": "US-002",

@@ -1,7 +1,7 @@
 # Progress Log
 
 ## Iteration Counter
-current_iteration: 1
+current_iteration: 2
 max_iterations: 15
 
 ## Codebase Patterns
@@ -25,3 +25,10 @@ max_iterations: 15
 ## Execution Log
 
 (Entries appended below as iterations complete)
+
+---
+
+## 2026-03-19 | US-001 | T-019d06e5-e869-778e-a104-7a7ea5b3c5a5
+**Changes:** Removed dead code: dashboard page, sign-in/sign-up forms, user-menu, healthCheck, privateData. Cleaned header (removed dashboard link, renamed "Home" to "Bylaw Chat"). Replaced page.tsx with simple placeholder.
+**Files:** apps/web/src/app/dashboard/page.tsx (deleted), apps/web/src/components/sign-in-form.tsx (deleted), apps/web/src/components/sign-up-form.tsx (deleted), apps/web/src/components/user-menu.tsx (deleted), packages/backend/convex/healthCheck.ts (deleted), packages/backend/convex/privateData.ts (deleted), apps/web/src/components/header.tsx, apps/web/src/app/page.tsx
+**Learnings:** turbo check-types finds no tasks because apps/web doesn't have a check-types script — use `npx tsc --noEmit` in apps/web directly. Lint-staged has a minor path issue but commits still succeed.
