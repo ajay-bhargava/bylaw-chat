@@ -1,0 +1,83 @@
+# Progress Log
+
+## Iteration Counter
+current_iteration: 9
+max_iterations: 15
+
+## Codebase Patterns
+
+- **Monorepo structure**: apps/web (Next.js 16 + React 19), packages/backend (Convex)
+- **Auth**: Better Auth + @convex-dev/better-auth, configured in packages/backend/convex/auth.ts
+- **Auth client**: apps/web/src/lib/auth-client.ts uses createAuthClient with convexClient plugin
+- **Providers**: apps/web/src/components/providers.tsx wraps with ConvexBetterAuthProvider + ThemeProvider
+- **Convex API pattern**: import { api } from "@bylaw-chat/backend/convex/_generated/api" + useQuery/useMutation/useAction
+- **UI**: Tailwind CSS 4, shadcn/ui components in apps/web/src/components/ui/, lucide-react icons
+- **Forms**: @tanstack/react-form (already installed)
+- **Styling**: class-variance-authority + clsx + tailwind-merge (cn() utility in lib/utils.ts)
+- **Env vars**: @bylaw-chat/env package for typed env, Convex env vars via npx convex env set
+- **Layout**: layout.tsx uses grid-rows-[auto_1fr] h-svh with Header + children
+- **Bylaws PDF**: apps/web/public/bylaws/By-Laws.pdf (served at /bylaws/By-Laws.pdf)
+- **Bylaws Markdown**: packages/backend/bylaws/parsed-contents.md (~4500 words, 17 Articles, Section-level granularity)
+- **Document structure**: Articles (Roman numerals) → Sections (decimal: 2.1, 2.2) → Subsections (2.4.1, (a), (b))
+
+---
+
+## Execution Log
+
+(Entries appended below as iterations complete)
+
+---
+
+## 2026-03-19 | US-001 | T-019d06e5-e869-778e-a104-7a7ea5b3c5a5
+**Changes:** Removed dead code: dashboard page, sign-in/sign-up forms, user-menu, healthCheck, privateData. Cleaned header (removed dashboard link, renamed "Home" to "Bylaw Chat"). Replaced page.tsx with simple placeholder.
+**Files:** apps/web/src/app/dashboard/page.tsx (deleted), apps/web/src/components/sign-in-form.tsx (deleted), apps/web/src/components/sign-up-form.tsx (deleted), apps/web/src/components/user-menu.tsx (deleted), packages/backend/convex/healthCheck.ts (deleted), packages/backend/convex/privateData.ts (deleted), apps/web/src/components/header.tsx, apps/web/src/app/page.tsx
+**Learnings:** turbo check-types finds no tasks because apps/web doesn't have a check-types script — use `npx tsc --noEmit` in apps/web directly. Lint-staged has a minor path issue but commits still succeed.
+
+---
+
+## 2026-03-19 | US-002 | T-019d06e5-e869-778e-a104-7a7ea5b3c5a5
+**Changes:** Added Google OAuth to Better Auth. Replaced emailAndPassword with socialProviders.google in auth.ts. Created GoogleSignIn component with "Sign in with Google" button. Added OAuth setup instructions to README.
+**Files:** packages/backend/convex/auth.ts, apps/web/src/components/google-sign-in.tsx (new), README.md
+**Learnings:** Better Auth social sign-in uses authClient.signIn.social({ provider: "google" }). No changes needed to auth-client.ts — convexClient plugin handles it.
+
+---
+
+## 2026-03-19 | US-003 | T-019d06e5-e869-778e-a104-7a7ea5b3c5a5
+**Changes:** Built split-pane layout with grid-cols-[1fr_2fr]. Auth gating via authClient.useSession() — shows GoogleSignIn for unauthenticated, split layout for authenticated. Placeholder panels for chat and PDF.
+**Files:** apps/web/src/app/page.tsx
+**Learnings:** authClient.useSession() returns { data: session, isPending }. Use isPending for loading state.
+
+---
+
+## 2026-03-19 | US-004 | T-019d06e5-e869-778e-a104-7a7ea5b3c5a5
+**Changes:** Created PdfViewer component with @react-pdf-viewer/core + search plugin. forwardRef with jumpToMatch exposed. Dynamic import wrapper (ssr:false). Configured next.config.ts with canvas:false webpack alias. Worker from unpkg CDN.
+**Files:** apps/web/src/components/pdf-viewer.tsx (new), apps/web/src/components/pdf-viewer-wrapper.tsx (new), apps/web/next.config.ts, apps/web/package.json
+**Learnings:** react-pdf-viewer 3.12 needs pdfjs-dist 3.x (not 5.x). searchPlugin has highlight(keywords) and jumpToMatch(index) methods. SingleKeyword type accepts string | RegExp | FlagKeyword. canvas native build fails are expected on macOS — just alias canvas:false in webpack.
+
+---
+
+## 2026-03-19 | US-005 | T-019d06e5-e869-778e-a104-7a7ea5b3c5a5
+**Changes:** Created Convex HTTP action for Anthropic chat streaming. chat.ts uses "use node", streamText + anthropic model, toTextStreamResponse with CORS. Bylaws embedded as string constant in bylaws-content.ts (~104KB). Registered POST/OPTIONS /api/chat in http.ts.
+**Files:** packages/backend/convex/chat.ts (new), packages/backend/convex/bylaws-content.ts (new), packages/backend/convex/http.ts, packages/backend/package.json
+**Learnings:** AI SDK v6 uses toTextStreamResponse (not toDataStreamResponse). Use TextStreamChatTransport on frontend to match. npx convex typecheck works for backend typechecking. Bylaws file is 17k words (~104KB) — fits fine as string constant.
+
+---
+
+## 2026-03-19 | US-006 | T-019d06e5-e869-778e-a104-7a7ea5b3c5a5
+**Changes:** Created chat-panel.tsx with useChat hook + TextStreamChatTransport. Renders message bubbles (user right-aligned, AI left-aligned). Input form with sendMessage({ text }). Loading/streaming states, stop/retry buttons. Auto-scroll.
+**Files:** apps/web/src/components/chat-panel.tsx (new), apps/web/package.json
+**Learnings:** useChat v6 returns { messages, sendMessage, status, stop, regenerate, error }. Messages use parts array. TextStreamChatTransport matches toTextStreamResponse backend. convexSiteUrl derived from NEXT_PUBLIC_CONVEX_URL (.cloud → .site).
+
+---
+
+## 2026-03-19 | US-007 | T-019d06e5-e869-778e-a104-7a7ea5b3c5a5
+**Changes:** Connected citations to PDF highlights. Created citations.ts utility (parseCitations, stripCitations). ChatPanel now parses citations from latest assistant message, renders inline clickable badges, exposes onCitationsChange and onCitationClick callbacks. Page.tsx wires citation quoted texts as keywords to PdfViewer.
+**Files:** apps/web/src/lib/citations.ts (new), apps/web/src/components/chat-panel.tsx, apps/web/src/app/page.tsx
+**Learnings:** Citation regex: /\[\[cite:\s*([^|]+)\|\s*([^\]]+)\]\]/g. renderAssistantMessage splits text into spans + badge buttons for inline rendering. useCallback for stable refs passed to child components.
+
+---
+
+## 2026-03-19 | US-008 | T-019d06e5-e869-778e-a104-7a7ea5b3c5a5
+**Changes:** Added user name + sign-out button to header. Fixed Next.js 16 build — added turbopack resolveAlias for canvas + empty-module.js. Both typecheck and build pass.
+**Files:** apps/web/src/components/header.tsx, apps/web/next.config.ts, apps/web/empty-module.js (new)
+**Learnings:** Next.js 16 defaults to Turbopack. Must add turbopack config alongside webpack config. Turbopack uses resolveAlias with { browser: "./path" } format. Empty module file needed for canvas alias.

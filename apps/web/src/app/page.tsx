@@ -1,45 +1,45 @@
 "use client";
-import { api } from "@bylaw-chat/backend/convex/_generated/api";
-import { useQuery } from "convex/react";
 
-const TITLE_TEXT = `
- ██████╗ ███████╗████████╗████████╗███████╗██████╗
- ██╔══██╗██╔════╝╚══██╔══╝╚══██╔══╝██╔════╝██╔══██╗
- ██████╔╝█████╗     ██║      ██║   █████╗  ██████╔╝
- ██╔══██╗██╔══╝     ██║      ██║   ██╔══╝  ██╔══██╗
- ██████╔╝███████╗   ██║      ██║   ███████╗██║  ██║
- ╚═════╝ ╚══════╝   ╚═╝      ╚═╝   ╚══════╝╚═╝  ╚═╝
+import { useCallback, useState } from "react";
 
- ████████╗    ███████╗████████╗ █████╗  ██████╗██╗  ██╗
- ╚══██╔══╝    ██╔════╝╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝
-    ██║       ███████╗   ██║   ███████║██║     █████╔╝
-    ██║       ╚════██║   ██║   ██╔══██║██║     ██╔═██╗
-    ██║       ███████║   ██║   ██║  ██║╚██████╗██║  ██╗
-    ╚═╝       ╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝
- `;
+import ChatPanel from "@/components/chat-panel";
+import GoogleSignIn from "@/components/google-sign-in";
+import PdfViewer from "@/components/pdf-viewer-wrapper";
+import { authClient } from "@/lib/auth-client";
+import { getPageForSection } from "@/lib/section-pages";
 
 export default function Home() {
-  const healthCheck = useQuery(api.healthCheck.get);
+  const { data: session, isPending } = authClient.useSession();
+  const [targetPage, setTargetPage] = useState<number | null>(null);
+
+  const handleCitationClick = useCallback((section: string) => {
+    const page = getPageForSection(section);
+    if (page !== null) {
+      // Reset then set so clicking the same section re-triggers navigation
+      setTargetPage(null);
+      queueMicrotask(() => setTargetPage(page));
+    }
+  }, []);
+
+  if (isPending) {
+    return (
+      <div className="flex items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <GoogleSignIn />;
+  }
 
   return (
-    <div className="container mx-auto max-w-3xl px-4 py-2">
-      <pre className="overflow-x-auto font-mono text-sm">{TITLE_TEXT}</pre>
-      <div className="grid gap-6">
-        <section className="rounded-lg border p-4">
-          <h2 className="mb-2 font-medium">API Status</h2>
-          <div className="flex items-center gap-2">
-            <div
-              className={`h-2 w-2 rounded-full ${healthCheck === "OK" ? "bg-green-500" : healthCheck === undefined ? "bg-orange-400" : "bg-red-500"}`}
-            />
-            <span className="text-sm text-muted-foreground">
-              {healthCheck === undefined
-                ? "Checking..."
-                : healthCheck === "OK"
-                  ? "Connected"
-                  : "Error"}
-            </span>
-          </div>
-        </section>
+    <div className="grid grid-cols-[1fr_2fr] h-full overflow-hidden">
+      <div className="border-r min-h-0">
+        <ChatPanel onCitationClick={handleCitationClick} />
+      </div>
+      <div className="overflow-hidden">
+        <PdfViewer targetPage={targetPage} />
       </div>
     </div>
   );

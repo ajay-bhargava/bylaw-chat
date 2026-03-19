@@ -1,0 +1,153 @@
+{
+  "project": "bylaw-chat",
+  "branchName": "autonomous/bylaw-chat",
+  "description": "A bylaws chat application with PDF viewer (2/3 of page) and AI chat (1/3 of page). Users authenticate via Google OAuth through Better Auth + Convex. Chat powered by Anthropic via Convex HTTP action streaming using Vercel AI SDK (streamText on backend, useChat on frontend via DefaultChatTransport pointed at .convex.site). PDF highlights citations from chat responses. No chat persistence needed — but the Convex backend handles the Anthropic API key and LLM calls.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Clean up dead code and scaffold layout",
+      "description": "As a developer, I need to remove the dead dashboard page, health check page, email/password sign-in/sign-up forms, and scaffold the new single-page layout so that the codebase is clean for the new feature.",
+      "acceptanceCriteria": [
+        "Delete apps/web/src/app/dashboard/ directory",
+        "Delete apps/web/src/components/sign-in-form.tsx",
+        "Delete apps/web/src/components/sign-up-form.tsx",
+        "Delete apps/web/src/components/user-menu.tsx (if only used by dashboard)",
+        "Delete packages/backend/convex/healthCheck.ts",
+        "Delete packages/backend/convex/privateData.ts",
+        "Remove dashboard link from header.tsx",
+        "Update apps/web/src/app/page.tsx to be a placeholder for the new layout",
+        "Typecheck passes: bun run check-types (or tsc --noEmit in apps/web)"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Deleted dashboard/, sign-in-form, sign-up-form, user-menu, healthCheck, privateData. Cleaned header, replaced page.tsx with placeholder."
+    },
+    {
+      "id": "US-002",
+      "title": "Add Google OAuth to Better Auth",
+      "description": "As a user, I need to sign in with my Google account so that I can securely access the bylaws chat without needing email/password.",
+      "acceptanceCriteria": [
+        "Add socialProviders.google config to packages/backend/convex/auth.ts with clientId and clientSecret from Convex env vars (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)",
+        "Update auth-client.ts if needed for social sign-in",
+        "Create a new sign-in page/component with a 'Sign in with Google' button using authClient.signIn.social({ provider: 'google' })",
+        "Replace the old email/password sign-in/sign-up flow entirely",
+        "Add setup instructions in README for: npx convex env set GOOGLE_CLIENT_ID <id> and npx convex env set GOOGLE_CLIENT_SECRET <secret>",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Added socialProviders.google to auth.ts, created GoogleSignIn component, added README setup instructions. Removed emailAndPassword config."
+    },
+    {
+      "id": "US-003",
+      "title": "Build the split-pane layout (1/3 chat, 2/3 PDF)",
+      "description": "As a user, I need a responsive layout where the left 1/3 of the page is the chat interface and the right 2/3 is the PDF viewer, so I can chat and see bylaws simultaneously.",
+      "acceptanceCriteria": [
+        "Main page uses a CSS grid or flexbox layout: 1fr 2fr (1/3 + 2/3)",
+        "Left panel contains the chat component area (placeholder for now)",
+        "Right panel contains the PDF viewer area (placeholder for now)",
+        "Layout is full-height (h-screen minus header)",
+        "Authenticated users see the layout, unauthenticated users see Google sign-in",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Split layout with grid-cols-[1fr_2fr]. Auth gating with authClient.useSession(). GoogleSignIn shown for unauthenticated users."
+    },
+    {
+      "id": "US-004",
+      "title": "Integrate PDF viewer with text search highlighting",
+      "description": "As a user, I need to see the bylaws PDF rendered in the right 2/3 of the page with the ability to highlight specific text passages that the AI references in its answers.",
+      "acceptanceCriteria": [
+        "Install @react-pdf-viewer/core + @react-pdf-viewer/search (and pdfjs-dist peer dep) in apps/web",
+        "PDF loads from /bylaws/By-Laws.pdf (public directory)",
+        "PDF renders with text layer enabled (for search/highlight)",
+        "Component accepts a keyword array prop (string[]) and passes it to searchPlugin({ keyword }) to highlight ALL keywords simultaneously",
+        "Multiple sections highlighted at once — each quoted citation text is a separate keyword entry, all rendered with highlight overlays concurrently",
+        "searchPluginInstance.highlight(index) method exposed so clicking a citation badge in the chat can jump/scroll the PDF to that specific highlight",
+        "Highlight updates reactively when keyword array prop changes (new citations from chat)",
+        "Dynamically imported with ssr: false to avoid Next.js SSR issues",
+        "Configure next.config.ts with canvas: false webpack alias if needed",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "Installed @react-pdf-viewer/core@3.12.0 + @react-pdf-viewer/search@3.12.0 + pdfjs-dist@3.11.174. PdfViewer component with forwardRef exposing jumpToMatch. Dynamic import wrapper with ssr:false. canvas:false webpack alias in next.config.ts. Worker URL from unpkg CDN."
+    },
+    {
+      "id": "US-005",
+      "title": "Create Convex HTTP action for Anthropic chat streaming (Vercel AI SDK)",
+      "description": "As a backend developer, I need a Convex HTTP action that accepts chat messages from useChat's DefaultChatTransport, loads the bylaws markdown as context, calls Anthropic's API using streamText from @ai-sdk/anthropic, and returns a proper Vercel AI SDK data stream so useChat on the frontend can consume it natively.",
+      "acceptanceCriteria": [
+        "Install ai and @ai-sdk/anthropic packages in packages/backend (bun add --cwd packages/backend ai @ai-sdk/anthropic)",
+        "Create packages/backend/convex/chat.ts with an HTTP action handler",
+        "HTTP action registered in packages/backend/convex/http.ts at POST /api/chat with CORS support (OPTIONS handler too)",
+        "Action parses the useChat request body (messages array in Vercel AI SDK format)",
+        "Action reads the bylaws markdown content (embedded as a string constant or read from file)",
+        "Action calls Anthropic via streamText({ model: anthropic('claude-sonnet-4-20250514'), messages, system: bylawsSystemPrompt })",
+        "System prompt instructs Claude to cite specific Article/Section numbers and include exact quoted text from bylaws wrapped in a parseable format like [[cite: Article X, Section X.X | quoted text]]",
+        "Returns the stream as a proper Response using result.toDataStreamResponse() or result.toTextStreamResponse() compatible with Vercel AI SDK's DefaultChatTransport/TextStreamChatTransport",
+        "ANTHROPIC_API_KEY read from Convex env vars (process.env.ANTHROPIC_API_KEY)",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "Created chat.ts with 'use node' directive. streamText + anthropic('claude-sonnet-4-20250514'). Returns toTextStreamResponse with CORS headers. Bylaws embedded as string constant in bylaws-content.ts. Registered POST /api/chat and OPTIONS /api/chat in http.ts. Uses ai@6.0.116 + @ai-sdk/anthropic@3.0.58."
+    },
+    {
+      "id": "US-006",
+      "title": "Build chat UI with Vercel AI SDK useChat and streaming",
+      "description": "As a user, I need a chat interface powered by Vercel AI SDK's useChat hook with DefaultChatTransport pointing at the Convex HTTP action, showing message bubbles with real-time streaming from Anthropic.",
+      "acceptanceCriteria": [
+        "Install ai and @ai-sdk/react packages in apps/web (bun add --cwd apps/web ai @ai-sdk/react)",
+        "Create apps/web/src/components/chat-panel.tsx using useChat from @ai-sdk/react",
+        "Configure useChat with DefaultChatTransport({ api: convexSiteUrl + '/api/chat' }) where convexSiteUrl is derived from NEXT_PUBLIC_CONVEX_URL (.cloud → .site)",
+        "Pass auth token in transport headers for authenticated requests if needed",
+        "Chat input at the bottom of the left panel with send button using sendMessage",
+        "User messages displayed as right-aligned bubbles",
+        "AI responses displayed as left-aligned bubbles with streaming text via message.parts",
+        "Show status indicator (submitted/streaming/ready/error) from useChat",
+        "Auto-scroll to latest message",
+        "No chat persistence — useChat manages ephemeral message state in the component",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": "Created chat-panel.tsx with useChat + TextStreamChatTransport pointed at convexSiteUrl/api/chat. sendMessage({ text }), message.parts rendering, status-based loading states. Auto-scroll, error display with retry, stop button."
+    },
+    {
+      "id": "US-007",
+      "title": "Connect chat citations to PDF highlights",
+      "description": "As a user, when the AI answers my question and cites specific bylaw sections, I need those exact quoted passages to be highlighted in the PDF viewer, so I can see where in the document the answer comes from.",
+      "acceptanceCriteria": [
+        "AI response citations in [[cite: ...| quoted text]] format are parsed from message text using regex /\\[\\[cite:\\s*([^|]+)\\|\\s*([^\\]]+)\\]\\]/g",
+        "ALL quoted text phrases from ALL citations in the latest AI message are collected into a single keyword array",
+        "Keyword array is passed to PDF viewer component which highlights ALL of them simultaneously via searchPlugin({ keyword })",
+        "Multi-section reasoning: if Claude cites 3 different sections, all 3 quoted passages are highlighted concurrently in the PDF",
+        "Citation references in the chat are rendered as clickable inline badges (e.g., styled pill with 'Article IX, §9.3')",
+        "Clicking a citation badge calls searchPluginInstance.highlight(index) to scroll the PDF to that specific highlighted passage",
+        "When a new AI response arrives, the keyword array updates reactively (replaces previous highlights with new ones)",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": "Created citations.ts with parseCitations and stripCitations utilities. ChatPanel extracts citations from latest assistant message via onCitationsChange callback. Citation badges rendered inline with renderAssistantMessage. onCitationClick calls pdfRef.jumpToMatch(index). Page.tsx wires citations → keywords → PdfViewer."
+    },
+    {
+      "id": "US-008",
+      "title": "Polish and final integration",
+      "description": "As a user, I need the complete flow to work end-to-end: sign in with Google, see the PDF, ask a question, see the streaming answer with highlighted citations in the PDF.",
+      "acceptanceCriteria": [
+        "Full flow works: Google sign-in → see layout → ask question → see streamed answer → see PDF highlights",
+        "Header shows user name/avatar and sign-out option",
+        "Proper loading states throughout (useChat status integration)",
+        "Error handling for failed API calls (useChat error state + retry via regenerate)",
+        "Typecheck passes: bun run check-types",
+        "Build passes: bun run build"
+      ],
+      "priority": 8,
+      "passes": true,
+      "notes": "Header shows user name and sign-out button. Turbopack config added for canvas alias. Build passes with Next.js 16 Turbopack. All stories complete."
+    }
+  ]
+}

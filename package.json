@@ -24,6 +24,8 @@
     "dev:web": "turbo -F web dev",
     "dev:server": "turbo -F @bylaw-chat/backend dev",
     "dev:setup": "turbo -F @bylaw-chat/backend dev:setup",
+    "clean": "rm -rf apps/web/.next apps/web/.turbo packages/backend/.convex packages/backend/.turbo .turbo node_modules/.cache",
+    "convex": "bun --cwd packages/backend convex",
     "prepare": "husky",
     "ruler:apply": "bunx @intellectronica/ruler@latest apply --local-only"
   },
