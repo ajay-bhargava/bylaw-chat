@@ -146,8 +146,8 @@
         "Build passes: bun run build"
       ],
       "priority": 8,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Header shows user name and sign-out button. Turbopack config added for canvas alias. Build passes with Next.js 16 Turbopack. All stories complete."
     }
   ]
 }
