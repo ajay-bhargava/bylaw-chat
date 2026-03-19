@@ -51,8 +51,8 @@
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Split layout with grid-cols-[1fr_2fr]. Auth gating with authClient.useSession(). GoogleSignIn shown for unauthenticated users."
     },
     {
       "id": "US-004",

@@ -1,7 +1,7 @@
 # Progress Log
 
 ## Iteration Counter
-current_iteration: 3
+current_iteration: 4
 max_iterations: 15
 
 ## Codebase Patterns
@@ -39,3 +39,10 @@ max_iterations: 15
 **Changes:** Added Google OAuth to Better Auth. Replaced emailAndPassword with socialProviders.google in auth.ts. Created GoogleSignIn component with "Sign in with Google" button. Added OAuth setup instructions to README.
 **Files:** packages/backend/convex/auth.ts, apps/web/src/components/google-sign-in.tsx (new), README.md
 **Learnings:** Better Auth social sign-in uses authClient.signIn.social({ provider: "google" }). No changes needed to auth-client.ts — convexClient plugin handles it.
+
+---
+
+## 2026-03-19 | US-003 | T-019d06e5-e869-778e-a104-7a7ea5b3c5a5
+**Changes:** Built split-pane layout with grid-cols-[1fr_2fr]. Auth gating via authClient.useSession() — shows GoogleSignIn for unauthenticated, split layout for authenticated. Placeholder panels for chat and PDF.
+**Files:** apps/web/src/app/page.tsx
+**Learnings:** authClient.useSession() returns { data: session, isPending }. Use isPending for loading state.
