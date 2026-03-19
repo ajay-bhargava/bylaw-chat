@@ -1,25 +1,24 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 
 import ChatPanel from "@/components/chat-panel";
 import GoogleSignIn from "@/components/google-sign-in";
 import PdfViewer from "@/components/pdf-viewer-wrapper";
-import type { PdfViewerHandle } from "@/components/pdf-viewer-wrapper";
 import { authClient } from "@/lib/auth-client";
-import type { Citation } from "@/lib/citations";
+import { getPageForSection } from "@/lib/section-pages";
 
 export default function Home() {
   const { data: session, isPending } = authClient.useSession();
-  const [citations, setCitations] = useState<Citation[]>([]);
-  const pdfRef = useRef<PdfViewerHandle>(null);
+  const [targetPage, setTargetPage] = useState<number | null>(null);
 
-  const handleCitationsChange = useCallback((newCitations: Citation[]) => {
-    setCitations(newCitations);
-  }, []);
-
-  const handleCitationClick = useCallback((index: number) => {
-    pdfRef.current?.jumpToMatch(index);
+  const handleCitationClick = useCallback((section: string) => {
+    const page = getPageForSection(section);
+    if (page !== null) {
+      // Reset then set so clicking the same section re-triggers navigation
+      setTargetPage(null);
+      queueMicrotask(() => setTargetPage(page));
+    }
   }, []);
 
   if (isPending) {
@@ -34,18 +33,13 @@ export default function Home() {
     return <GoogleSignIn />;
   }
 
-  const keywords = citations.map((c) => c.quotedText);
-
   return (
-    <div className="grid grid-cols-[1fr_2fr] h-full">
-      <div className="border-r">
-        <ChatPanel
-          onCitationsChange={handleCitationsChange}
-          onCitationClick={handleCitationClick}
-        />
+    <div className="grid grid-cols-[1fr_2fr] h-full overflow-hidden">
+      <div className="border-r min-h-0">
+        <ChatPanel onCitationClick={handleCitationClick} />
       </div>
       <div className="overflow-hidden">
-        <PdfViewer ref={pdfRef} keywords={keywords} />
+        <PdfViewer targetPage={targetPage} />
       </div>
     </div>
   );

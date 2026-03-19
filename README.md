@@ -50,8 +50,8 @@ Your app will connect to the Convex cloud backend automatically.
 4. Set the environment variables in Convex:
 
 ```bash
-npx convex env set GOOGLE_CLIENT_ID <your-client-id>
-npx convex env set GOOGLE_CLIENT_SECRET <your-client-secret>
+bun convex env set GOOGLE_CLIENT_ID <your-client-id>
+bun convex env set GOOGLE_CLIENT_SECRET <your-client-secret>
 ```
 
 ## Git Hooks and Formatting

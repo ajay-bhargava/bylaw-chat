@@ -4,22 +4,17 @@ import { useChat } from "@ai-sdk/react";
 import { TextStreamChatTransport } from "ai";
 import { SendHorizontal } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
-
-import { env } from "@bylaw-chat/env/web";
-import { type Citation, parseCitations, stripCitations } from "@/lib/citations";
+import Markdown from "react-markdown";
 
 import { Button } from "./ui/button";
 
-const convexSiteUrl = env.NEXT_PUBLIC_CONVEX_URL.replace(".cloud", ".site");
-
 interface ChatPanelProps {
-  onCitationsChange: (citations: Citation[]) => void;
-  onCitationClick: (index: number) => void;
+  onCitationClick?: (section: string) => void;
 }
 
-export default function ChatPanel({ onCitationsChange, onCitationClick }: ChatPanelProps) {
+export default function ChatPanel({ onCitationClick }: ChatPanelProps) {
   const transport = useMemo(
-    () => new TextStreamChatTransport({ api: convexSiteUrl + "/api/chat" }),
+    () => new TextStreamChatTransport({ api: "/api/chat" }),
     [],
   );
 
@@ -32,21 +27,6 @@ export default function ChatPanel({ onCitationsChange, onCitationClick }: ChatPa
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
-  // Extract citations from the latest assistant message
-  useEffect(() => {
-    const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
-    if (!lastAssistant) {
-      onCitationsChange([]);
-      return;
-    }
-    const fullText = lastAssistant.parts
-      .filter((p) => p.type === "text")
-      .map((p) => p.text)
-      .join("");
-    const citations = parseCitations(fullText);
-    onCitationsChange(citations);
-  }, [messages, onCitationsChange]);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -136,43 +116,44 @@ export default function ChatPanel({ onCitationsChange, onCitationClick }: ChatPa
 
 function renderAssistantMessage(
   text: string,
-  onCitationClick: (index: number) => void,
+  onCitationClick?: (section: string) => void,
 ) {
   const CITATION_REGEX = /\[\[cite:\s*([^|]+)\|\s*([^\]]+)\]\]/g;
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
-  let citationIndex = 0;
   let match;
 
   while ((match = CITATION_REGEX.exec(text)) !== null) {
     if (match.index > lastIndex) {
       parts.push(
-        <span key={`text-${lastIndex}`} className="whitespace-pre-wrap">
-          {text.slice(lastIndex, match.index)}
-        </span>,
+        <div key={`text-${lastIndex}`} className="prose prose-sm dark:prose-invert max-w-none">
+          <Markdown>{text.slice(lastIndex, match.index)}</Markdown>
+        </div>,
       );
     }
     const section = match[1].trim();
-    const idx = citationIndex;
+    const quotedText = match[2].trim();
     parts.push(
       <button
-        key={`cite-${idx}`}
+        key={`cite-${lastIndex}-${match.index}`}
         type="button"
-        onClick={() => onCitationClick(idx)}
-        className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors mx-0.5"
+        onClick={() => onCitationClick?.(section)}
+        className="my-1.5 block w-full cursor-pointer rounded border-l-2 border-primary/40 bg-primary/5 px-2.5 py-1.5 text-left hover:bg-primary/10 transition-colors"
       >
-        📖 {section}
+        <span className="text-xs font-medium text-primary">📖 {section}</span>
+        <span className="mt-0.5 block text-xs italic text-muted-foreground">
+          &ldquo;{quotedText}&rdquo;
+        </span>
       </button>,
     );
-    citationIndex++;
     lastIndex = match.index + match[0].length;
   }
 
   if (lastIndex < text.length) {
     parts.push(
-      <span key={`text-${lastIndex}`} className="whitespace-pre-wrap">
-        {text.slice(lastIndex)}
-      </span>,
+      <div key={`text-${lastIndex}`} className="prose prose-sm dark:prose-invert max-w-none">
+        <Markdown>{text.slice(lastIndex)}</Markdown>
+      </div>,
     );
   }
 
