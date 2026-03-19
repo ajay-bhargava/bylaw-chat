@@ -1,7 +1,9 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
+import { api } from "@bylaw-chat/backend/convex/_generated/api";
 import { TextStreamChatTransport } from "ai";
+import { useMutation } from "convex/react";
 import { SendHorizontal } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 import Markdown from "react-markdown";
@@ -22,11 +24,33 @@ export default function ChatPanel({ onCitationClick }: ChatPanelProps) {
     transport,
   });
 
+  const saveChatMessage = useMutation(api.chatMessages.save);
+  const prevStatusRef = useRef(status);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Save to Convex when streaming completes
+  useEffect(() => {
+    if (prevStatusRef.current === "streaming" && status === "ready") {
+      const lastUser = [...messages].reverse().find((m) => m.role === "user");
+      const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
+      if (lastUser && lastAssistant) {
+        const userText = lastUser.parts
+          .filter((p) => p.type === "text")
+          .map((p) => p.text)
+          .join("");
+        const assistantText = lastAssistant.parts
+          .filter((p) => p.type === "text")
+          .map((p) => p.text)
+          .join("");
+        saveChatMessage({ userMessage: userText, assistantMessage: assistantText });
+      }
+    }
+    prevStatusRef.current = status;
+  }, [status, messages, saveChatMessage]);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

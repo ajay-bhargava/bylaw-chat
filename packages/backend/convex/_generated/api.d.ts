@@ -10,6 +10,7 @@
 
 import type * as auth from "../auth.js";
 import type * as bylaws_content from "../bylaws_content.js";
+import type * as chatMessages from "../chatMessages.js";
 import type * as http from "../http.js";
 
 import type {
@@ -21,6 +22,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   bylaws_content: typeof bylaws_content;
+  chatMessages: typeof chatMessages;
   http: typeof http;
 }>;
 
