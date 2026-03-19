@@ -112,8 +112,8 @@
         "Typecheck passes"
       ],
       "priority": 6,
-      "passes": false,
-      "notes": "useChat v6 API: import { useChat } from '@ai-sdk/react'; import { DefaultChatTransport } from 'ai'; Messages use message.parts array where part.type === 'text'. sendMessage({ text: input }) to send. Status from useChat for loading states. If using TextStreamChatTransport instead, import { TextStreamChatTransport } from 'ai' and backend returns plain text stream."
+      "passes": true,
+      "notes": "Created chat-panel.tsx with useChat + TextStreamChatTransport pointed at convexSiteUrl/api/chat. sendMessage({ text }), message.parts rendering, status-based loading states. Auto-scroll, error display with retry, stop button."
     },
     {
       "id": "US-007",

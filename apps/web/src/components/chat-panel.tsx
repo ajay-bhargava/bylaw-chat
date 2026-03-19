@@ -6,12 +6,18 @@ import { SendHorizontal } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 
 import { env } from "@bylaw-chat/env/web";
+import { type Citation, parseCitations, stripCitations } from "@/lib/citations";
 
 import { Button } from "./ui/button";
 
 const convexSiteUrl = env.NEXT_PUBLIC_CONVEX_URL.replace(".cloud", ".site");
 
-export default function ChatPanel() {
+interface ChatPanelProps {
+  onCitationsChange: (citations: Citation[]) => void;
+  onCitationClick: (index: number) => void;
+}
+
+export default function ChatPanel({ onCitationsChange, onCitationClick }: ChatPanelProps) {
   const transport = useMemo(
     () => new TextStreamChatTransport({ api: convexSiteUrl + "/api/chat" }),
     [],
@@ -22,11 +28,25 @@ export default function ChatPanel() {
   });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Extract citations from the latest assistant message
+  useEffect(() => {
+    const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
+    if (!lastAssistant) {
+      onCitationsChange([]);
+      return;
+    }
+    const fullText = lastAssistant.parts
+      .filter((p) => p.type === "text")
+      .map((p) => p.text)
+      .join("");
+    const citations = parseCitations(fullText);
+    onCitationsChange(citations);
+  }, [messages, onCitationsChange]);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -62,13 +82,21 @@ export default function ChatPanel() {
                   : "bg-muted"
               }`}
             >
-              {message.parts.map((part, i) =>
-                part.type === "text" ? (
-                  <span key={i} className="whitespace-pre-wrap">
-                    {part.text}
-                  </span>
-                ) : null,
-              )}
+              {message.role === "assistant"
+                ? renderAssistantMessage(
+                    message.parts
+                      .filter((p) => p.type === "text")
+                      .map((p) => p.text)
+                      .join(""),
+                    onCitationClick,
+                  )
+                : message.parts.map((part, i) =>
+                    part.type === "text" ? (
+                      <span key={i} className="whitespace-pre-wrap">
+                        {part.text}
+                      </span>
+                    ) : null,
+                  )}
             </div>
           </div>
         ))}
@@ -86,7 +114,6 @@ export default function ChatPanel() {
       </div>
       <form onSubmit={handleSubmit} className="border-t p-4 flex gap-2">
         <input
-          ref={inputRef}
           name="message"
           placeholder="Ask about the bylaws..."
           className="flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -105,4 +132,49 @@ export default function ChatPanel() {
       </form>
     </div>
   );
+}
+
+function renderAssistantMessage(
+  text: string,
+  onCitationClick: (index: number) => void,
+) {
+  const CITATION_REGEX = /\[\[cite:\s*([^|]+)\|\s*([^\]]+)\]\]/g;
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let citationIndex = 0;
+  let match;
+
+  while ((match = CITATION_REGEX.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(
+        <span key={`text-${lastIndex}`} className="whitespace-pre-wrap">
+          {text.slice(lastIndex, match.index)}
+        </span>,
+      );
+    }
+    const section = match[1].trim();
+    const idx = citationIndex;
+    parts.push(
+      <button
+        key={`cite-${idx}`}
+        type="button"
+        onClick={() => onCitationClick(idx)}
+        className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors mx-0.5"
+      >
+        📖 {section}
+      </button>,
+    );
+    citationIndex++;
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(
+      <span key={`text-${lastIndex}`} className="whitespace-pre-wrap">
+        {text.slice(lastIndex)}
+      </span>,
+    );
+  }
+
+  return parts;
 }
