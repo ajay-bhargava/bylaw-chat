@@ -41,7 +41,7 @@ export default function PdfViewer({ targetPage }: PdfViewerProps) {
     <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
       <div className="h-full">
         <Viewer
-          fileUrl="/bylaws/By-Laws.pdf"
+          fileUrl="/bylaws/by-laws.pdf"
           plugins={[pluginRef.current]}
         />
       </div>
