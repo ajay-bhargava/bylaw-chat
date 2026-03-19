@@ -1,7 +1,7 @@
 # Progress Log
 
 ## Iteration Counter
-current_iteration: 5
+current_iteration: 6
 max_iterations: 15
 
 ## Codebase Patterns
@@ -53,3 +53,10 @@ max_iterations: 15
 **Changes:** Created PdfViewer component with @react-pdf-viewer/core + search plugin. forwardRef with jumpToMatch exposed. Dynamic import wrapper (ssr:false). Configured next.config.ts with canvas:false webpack alias. Worker from unpkg CDN.
 **Files:** apps/web/src/components/pdf-viewer.tsx (new), apps/web/src/components/pdf-viewer-wrapper.tsx (new), apps/web/next.config.ts, apps/web/package.json
 **Learnings:** react-pdf-viewer 3.12 needs pdfjs-dist 3.x (not 5.x). searchPlugin has highlight(keywords) and jumpToMatch(index) methods. SingleKeyword type accepts string | RegExp | FlagKeyword. canvas native build fails are expected on macOS — just alias canvas:false in webpack.
+
+---
+
+## 2026-03-19 | US-005 | T-019d06e5-e869-778e-a104-7a7ea5b3c5a5
+**Changes:** Created Convex HTTP action for Anthropic chat streaming. chat.ts uses "use node", streamText + anthropic model, toTextStreamResponse with CORS. Bylaws embedded as string constant in bylaws-content.ts (~104KB). Registered POST/OPTIONS /api/chat in http.ts.
+**Files:** packages/backend/convex/chat.ts (new), packages/backend/convex/bylaws-content.ts (new), packages/backend/convex/http.ts, packages/backend/package.json
+**Learnings:** AI SDK v6 uses toTextStreamResponse (not toDataStreamResponse). Use TextStreamChatTransport on frontend to match. npx convex typecheck works for backend typechecking. Bylaws file is 17k words (~104KB) — fits fine as string constant.

@@ -91,8 +91,8 @@
         "Typecheck passes"
       ],
       "priority": 5,
-      "passes": false,
-      "notes": "The HTTP action runs on the Convex .site domain. The frontend useChat will point DefaultChatTransport at https://<deployment>.convex.site/api/chat. Since this is a cross-origin request, CORS headers are required. The action uses 'use node' directive for Node.js runtime access. streamText returns a result that can be converted to a Response via .toDataStreamResponse() or .toTextStreamResponse(). EMBED THE FULL BYLAWS MARKDOWN (~4500 words, ~6k tokens) as a string constant in the system prompt — this is trivial for Claude's 200k context. No RAG/vector search needed for a doc this small."
+      "passes": true,
+      "notes": "Created chat.ts with 'use node' directive. streamText + anthropic('claude-sonnet-4-20250514'). Returns toTextStreamResponse with CORS headers. Bylaws embedded as string constant in bylaws-content.ts. Registered POST /api/chat and OPTIONS /api/chat in http.ts. Uses ai@6.0.116 + @ai-sdk/anthropic@3.0.58."
     },
     {
       "id": "US-006",
