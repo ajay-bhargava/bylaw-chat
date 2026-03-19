@@ -71,8 +71,8 @@
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": "Use @react-pdf-viewer/core + @react-pdf-viewer/search plugin. The search plugin keyword prop accepts an array of strings and highlights ALL occurrences of ALL keywords simultaneously in the PDF text layer. This is how multi-section reasoning results are shown — every cited passage is visible at once. searchPluginInstance.highlight(n) scrolls to the nth match."
+      "passes": true,
+      "notes": "Installed @react-pdf-viewer/core@3.12.0 + @react-pdf-viewer/search@3.12.0 + pdfjs-dist@3.11.174. PdfViewer component with forwardRef exposing jumpToMatch. Dynamic import wrapper with ssr:false. canvas:false webpack alias in next.config.ts. Worker URL from unpkg CDN."
     },
     {
       "id": "US-005",

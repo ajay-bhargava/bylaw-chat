@@ -1,7 +1,7 @@
 # Progress Log
 
 ## Iteration Counter
-current_iteration: 4
+current_iteration: 5
 max_iterations: 15
 
 ## Codebase Patterns
@@ -46,3 +46,10 @@ max_iterations: 15
 **Changes:** Built split-pane layout with grid-cols-[1fr_2fr]. Auth gating via authClient.useSession() — shows GoogleSignIn for unauthenticated, split layout for authenticated. Placeholder panels for chat and PDF.
 **Files:** apps/web/src/app/page.tsx
 **Learnings:** authClient.useSession() returns { data: session, isPending }. Use isPending for loading state.
+
+---
+
+## 2026-03-19 | US-004 | T-019d06e5-e869-778e-a104-7a7ea5b3c5a5
+**Changes:** Created PdfViewer component with @react-pdf-viewer/core + search plugin. forwardRef with jumpToMatch exposed. Dynamic import wrapper (ssr:false). Configured next.config.ts with canvas:false webpack alias. Worker from unpkg CDN.
+**Files:** apps/web/src/components/pdf-viewer.tsx (new), apps/web/src/components/pdf-viewer-wrapper.tsx (new), apps/web/next.config.ts, apps/web/package.json
+**Learnings:** react-pdf-viewer 3.12 needs pdfjs-dist 3.x (not 5.x). searchPlugin has highlight(keywords) and jumpToMatch(index) methods. SingleKeyword type accepts string | RegExp | FlagKeyword. canvas native build fails are expected on macOS — just alias canvas:false in webpack.
