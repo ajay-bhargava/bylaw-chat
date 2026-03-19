@@ -1,7 +1,7 @@
 # Progress Log
 
 ## Iteration Counter
-current_iteration: 7
+current_iteration: 8
 max_iterations: 15
 
 ## Codebase Patterns
@@ -67,3 +67,10 @@ max_iterations: 15
 **Changes:** Created chat-panel.tsx with useChat hook + TextStreamChatTransport. Renders message bubbles (user right-aligned, AI left-aligned). Input form with sendMessage({ text }). Loading/streaming states, stop/retry buttons. Auto-scroll.
 **Files:** apps/web/src/components/chat-panel.tsx (new), apps/web/package.json
 **Learnings:** useChat v6 returns { messages, sendMessage, status, stop, regenerate, error }. Messages use parts array. TextStreamChatTransport matches toTextStreamResponse backend. convexSiteUrl derived from NEXT_PUBLIC_CONVEX_URL (.cloud → .site).
+
+---
+
+## 2026-03-19 | US-007 | T-019d06e5-e869-778e-a104-7a7ea5b3c5a5
+**Changes:** Connected citations to PDF highlights. Created citations.ts utility (parseCitations, stripCitations). ChatPanel now parses citations from latest assistant message, renders inline clickable badges, exposes onCitationsChange and onCitationClick callbacks. Page.tsx wires citation quoted texts as keywords to PdfViewer.
+**Files:** apps/web/src/lib/citations.ts (new), apps/web/src/components/chat-panel.tsx, apps/web/src/app/page.tsx
+**Learnings:** Citation regex: /\[\[cite:\s*([^|]+)\|\s*([^\]]+)\]\]/g. renderAssistantMessage splits text into spans + badge buttons for inline rendering. useCallback for stable refs passed to child components.

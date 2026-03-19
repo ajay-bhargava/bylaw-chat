@@ -130,8 +130,8 @@
         "Typecheck passes"
       ],
       "priority": 7,
-      "passes": false,
-      "notes": "Parse citations from the AI response text using regex. Group 1 = section reference for badge display, Group 2 = quoted text for PDF keyword highlighting. Accumulate all citations from the latest message into a single string[] for the PDF viewer. Each clickable badge maps to an index in the keyword array for jump-to-highlight navigation."
+      "passes": true,
+      "notes": "Created citations.ts with parseCitations and stripCitations utilities. ChatPanel extracts citations from latest assistant message via onCitationsChange callback. Citation badges rendered inline with renderAssistantMessage. onCitationClick calls pdfRef.jumpToMatch(index). Page.tsx wires citations → keywords → PdfViewer."
     },
     {
       "id": "US-008",
