@@ -5,7 +5,8 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": ["dist/**", ".next/**"]
+      "outputs": ["dist/**", ".next/**"],
+      "env": ["ANTHROPIC_API_KEY", "CONVEX_DEPLOY_KEY"]
     },
     "lint": {
       "dependsOn": ["^lint"]

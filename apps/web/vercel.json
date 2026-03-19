@@ -1,5 +1,0 @@
-{
-  "installCommand": "cd ../.. && bun install",
-  "buildCommand": "cd ../../packages/backend && npx convex deploy --cmd 'cd ../../apps/web && npx next build'",
-  "outputDirectory": ".next"
-}
