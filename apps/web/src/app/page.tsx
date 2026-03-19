@@ -39,7 +39,7 @@ export default function Home() {
         <ChatPanel onCitationClick={handleCitationClick} />
       </div>
       <div className="overflow-hidden">
-        <PdfViewer targetPage={targetPage} />
+        <PdfViewer fileUrl="/bylaws/by-laws.pdf" targetPage={targetPage} />
       </div>
     </div>
   );

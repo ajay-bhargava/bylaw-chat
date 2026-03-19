@@ -9,6 +9,7 @@ import { useEffect, useRef } from "react";
 import "@react-pdf-viewer/core/lib/styles/index.css";
 
 interface PdfViewerProps {
+  fileUrl: string;
   targetPage: number | null;
 }
 
@@ -25,7 +26,7 @@ function createJumpToPagePlugin(): Plugin & { jumpToPage: (page: number) => void
   };
 }
 
-export default function PdfViewer({ targetPage }: PdfViewerProps) {
+export default function PdfViewer({ fileUrl, targetPage }: PdfViewerProps) {
   const pluginRef = useRef<ReturnType<typeof createJumpToPagePlugin> | null>(null);
   if (!pluginRef.current) {
     pluginRef.current = createJumpToPagePlugin();
@@ -41,7 +42,7 @@ export default function PdfViewer({ targetPage }: PdfViewerProps) {
     <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
       <div className="h-full">
         <Viewer
-          fileUrl="/bylaws/by-laws.pdf"
+          fileUrl={fileUrl}
           plugins={[pluginRef.current]}
         />
       </div>
