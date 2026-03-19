@@ -1,0 +1,27 @@
+# Progress Log
+
+## Iteration Counter
+current_iteration: 1
+max_iterations: 15
+
+## Codebase Patterns
+
+- **Monorepo structure**: apps/web (Next.js 16 + React 19), packages/backend (Convex)
+- **Auth**: Better Auth + @convex-dev/better-auth, configured in packages/backend/convex/auth.ts
+- **Auth client**: apps/web/src/lib/auth-client.ts uses createAuthClient with convexClient plugin
+- **Providers**: apps/web/src/components/providers.tsx wraps with ConvexBetterAuthProvider + ThemeProvider
+- **Convex API pattern**: import { api } from "@bylaw-chat/backend/convex/_generated/api" + useQuery/useMutation/useAction
+- **UI**: Tailwind CSS 4, shadcn/ui components in apps/web/src/components/ui/, lucide-react icons
+- **Forms**: @tanstack/react-form (already installed)
+- **Styling**: class-variance-authority + clsx + tailwind-merge (cn() utility in lib/utils.ts)
+- **Env vars**: @bylaw-chat/env package for typed env, Convex env vars via npx convex env set
+- **Layout**: layout.tsx uses grid-rows-[auto_1fr] h-svh with Header + children
+- **Bylaws PDF**: apps/web/public/bylaws/By-Laws.pdf (served at /bylaws/By-Laws.pdf)
+- **Bylaws Markdown**: packages/backend/bylaws/parsed-contents.md (~4500 words, 17 Articles, Section-level granularity)
+- **Document structure**: Articles (Roman numerals) → Sections (decimal: 2.1, 2.2) → Subsections (2.4.1, (a), (b))
+
+---
+
+## Execution Log
+
+(Entries appended below as iterations complete)
