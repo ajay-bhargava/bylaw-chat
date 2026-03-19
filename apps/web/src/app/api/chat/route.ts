@@ -27,6 +27,7 @@ export async function POST(request: Request) {
     model: anthropic("claude-sonnet-4-20250514"),
     messages: await convertToModelMessages(messages),
     system: systemPrompt,
+    maxOutputTokens: 4096,
   });
 
   return result.toTextStreamResponse();
