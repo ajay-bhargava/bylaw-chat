@@ -35,8 +35,8 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": "Requires GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to be set in Convex env. User must configure Google Cloud OAuth consent screen with redirect URI: https://<deployment>.convex.site/api/auth/callback/google"
+      "passes": true,
+      "notes": "Added socialProviders.google to auth.ts, created GoogleSignIn component, added README setup instructions. Removed emailAndPassword config."
     },
     {
       "id": "US-003",
