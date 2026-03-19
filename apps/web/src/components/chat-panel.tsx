@@ -8,10 +8,12 @@ import { SendHorizontal } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 import Markdown from "react-markdown";
 
+import type { DocumentId } from "@/lib/section-pages";
+
 import { Button } from "./ui/button";
 
 interface ChatPanelProps {
-  onCitationClick?: (section: string) => void;
+  onCitationClick?: (section: string, document: DocumentId) => void;
 }
 
 export default function ChatPanel({ onCitationClick }: ChatPanelProps) {
@@ -70,7 +72,7 @@ export default function ChatPanel({ onCitationClick }: ChatPanelProps) {
         {messages.length === 0 && (
           <div className="flex h-full items-center justify-center">
             <p className="text-muted-foreground text-sm">
-              Ask a question about the bylaws
+              Ask a question about the bylaws or offering plan
             </p>
           </div>
         )}
@@ -119,7 +121,7 @@ export default function ChatPanel({ onCitationClick }: ChatPanelProps) {
       <form onSubmit={handleSubmit} className="border-t p-4 flex gap-2">
         <input
           name="message"
-          placeholder="Ask about the bylaws..."
+          placeholder="Ask about the bylaws or offering plan..."
           className="flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           disabled={isLoading}
           autoComplete="off"
@@ -138,11 +140,14 @@ export default function ChatPanel({ onCitationClick }: ChatPanelProps) {
   );
 }
 
+const VALID_DOCUMENTS = new Set(["bylaws", "offering-plan"]);
+
 function renderAssistantMessage(
   text: string,
-  onCitationClick?: (section: string) => void,
+  onCitationClick?: (section: string, document: DocumentId) => void,
 ) {
-  const CITATION_REGEX = /\[\[cite:\s*([^|]+)\|\s*([^\]]+)\]\]/g;
+  // Match both 3-part [[cite: doc | section | text]] and 2-part [[cite: section | text]]
+  const CITATION_REGEX = /\[\[cite:\s*([^|\]]+)\|\s*([^|\]]+)(?:\|\s*([^\]]+))?\]\]/g;
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
   let match;
@@ -155,16 +160,34 @@ function renderAssistantMessage(
         </div>,
       );
     }
-    const section = match[1].trim();
-    const quotedText = match[2].trim();
+
+    let document: DocumentId;
+    let section: string;
+    let quotedText: string;
+
+    if (match[3]) {
+      // 3-part format: doc | section | text
+      const doc = match[1].trim().toLowerCase();
+      document = VALID_DOCUMENTS.has(doc) ? (doc as DocumentId) : "bylaws";
+      section = match[2].trim();
+      quotedText = match[3].trim();
+    } else {
+      // 2-part format: section | text (default to bylaws)
+      document = "bylaws";
+      section = match[1].trim();
+      quotedText = match[2].trim();
+    }
+
+    const icon = document === "offering-plan" ? "📋 Offering Plan" : "📖 Bylaws";
+
     parts.push(
       <button
         key={`cite-${lastIndex}-${match.index}`}
         type="button"
-        onClick={() => onCitationClick?.(section)}
+        onClick={() => onCitationClick?.(section, document)}
         className="my-1.5 block w-full cursor-pointer rounded border-l-2 border-primary/40 bg-primary/5 px-2.5 py-1.5 text-left hover:bg-primary/10 transition-colors"
       >
-        <span className="text-xs font-medium text-primary">📖 {section}</span>
+        <span className="text-xs font-medium text-primary">{icon}: {section}</span>
         <span className="mt-0.5 block text-xs italic text-muted-foreground">
           &ldquo;{quotedText}&rdquo;
         </span>
