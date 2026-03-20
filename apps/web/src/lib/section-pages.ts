@@ -1,8 +1,10 @@
+export type DocumentId = "bylaws" | "offering-plan";
+
 /**
  * Maps bylaw section identifiers to zero-based PDF page indices.
  * The source PDF page numbering starts at 334, so PDF page 0 = doc page 334.
  */
-const SECTION_PAGE_MAP: Record<string, number> = {
+const BYLAWS_SECTION_PAGE_MAP: Record<string, number> = {
   "Section 1": 0,
   "Section 1.2": 0,
   "Section 1.3": 0,
@@ -119,23 +121,116 @@ const SECTION_PAGE_MAP: Record<string, number> = {
 };
 
 /**
+ * Maps offering plan section names to zero-based PDF page indices.
+ * The PDF has ~15 pages of front matter (cover, TOC, etc.) before numbered page 1.
+ * Roman numeral pages (Special Risks) start around PDF page 5.
+ * Page offset: document page N → PDF page index (N + 14) for numbered pages.
+ */
+const OFFERING_PLAN_OFFSET = 14;
+
+const OFFERING_PLAN_SECTION_PAGE_MAP: Record<string, number> = {
+  "Special Risks": 5,
+  "SPECIAL RISKS": 5,
+  "Definitions": OFFERING_PLAN_OFFSET + 1,
+  "DEFINITIONS": OFFERING_PLAN_OFFSET + 1,
+  "Introduction": OFFERING_PLAN_OFFSET + 6,
+  "INTRODUCTION": OFFERING_PLAN_OFFSET + 6,
+  "Description of Property and Improvements": OFFERING_PLAN_OFFSET + 11,
+  "Location and Area Information": OFFERING_PLAN_OFFSET + 15,
+  "Schedule A": OFFERING_PLAN_OFFSET + 17,
+  "Offering Prices": OFFERING_PLAN_OFFSET + 17,
+  "Schedule B": OFFERING_PLAN_OFFSET + 24,
+  "Budget": OFFERING_PLAN_OFFSET + 24,
+  "PROJECTED BUDGET": OFFERING_PLAN_OFFSET + 24,
+  "Schedule B-1": OFFERING_PLAN_OFFSET + 32,
+  "Changes in Prices and Units": OFFERING_PLAN_OFFSET + 39,
+  "CHANGES IN PRICES AND UNITS": OFFERING_PLAN_OFFSET + 39,
+  "Interim Leases": OFFERING_PLAN_OFFSET + 42,
+  "INTERIM LEASES": OFFERING_PLAN_OFFSET + 42,
+  "Procedure to Purchase": OFFERING_PLAN_OFFSET + 44,
+  "Assignment of Purchase Agreements": OFFERING_PLAN_OFFSET + 52,
+  "Effective Date": OFFERING_PLAN_OFFSET + 53,
+  "Terms of Sale": OFFERING_PLAN_OFFSET + 55,
+  "Unit Closing Costs": OFFERING_PLAN_OFFSET + 59,
+  "Rights and Obligations of the Sponsor": OFFERING_PLAN_OFFSET + 65,
+  "RIGHTS AND OBLIGATIONS OF THE SPONSOR": OFFERING_PLAN_OFFSET + 65,
+  "Control by the Sponsor": OFFERING_PLAN_OFFSET + 77,
+  "CONTROL BY THE SPONSOR": OFFERING_PLAN_OFFSET + 77,
+  "Board of Managers": OFFERING_PLAN_OFFSET + 79,
+  "BOARD OF MANAGERS": OFFERING_PLAN_OFFSET + 79,
+  "Rights and Obligations of Unit Owners": OFFERING_PLAN_OFFSET + 83,
+  "RIGHTS AND OBLIGATIONS OF UNIT OWNERS AND THE BOARD OF MANAGERS": OFFERING_PLAN_OFFSET + 83,
+  "Real Estate Taxes": OFFERING_PLAN_OFFSET + 97,
+  "REAL ESTATE TAXES": OFFERING_PLAN_OFFSET + 97,
+  "Income Tax Deductions": OFFERING_PLAN_OFFSET + 106,
+  "INCOME TAX DEDUCTIONS": OFFERING_PLAN_OFFSET + 106,
+  "Counsel's Tax Opinion": OFFERING_PLAN_OFFSET + 108,
+  "COUNSEL'S TAX OPINION": OFFERING_PLAN_OFFSET + 108,
+  "Working Capital Fund": OFFERING_PLAN_OFFSET + 111,
+  "WORKING CAPITAL FUND": OFFERING_PLAN_OFFSET + 111,
+  "Reserve Fund": OFFERING_PLAN_OFFSET + 111,
+  "RESERVE FUND": OFFERING_PLAN_OFFSET + 111,
+  "Management Agreement": OFFERING_PLAN_OFFSET + 112,
+  "MANAGEMENT AGREEMENT": OFFERING_PLAN_OFFSET + 112,
+  "General": OFFERING_PLAN_OFFSET + 121,
+  "GENERAL": OFFERING_PLAN_OFFSET + 121,
+  "Reservation of Air and Development Rights": OFFERING_PLAN_OFFSET + 122,
+  "RESERVATION OF AIR AND DEVELOPMENT RIGHTS": OFFERING_PLAN_OFFSET + 122,
+  "Purchase Agreement": OFFERING_PLAN_OFFSET + 124,
+  "Form of Unit Deed": OFFERING_PLAN_OFFSET + 152,
+  "FORM OF UNIT DEED": OFFERING_PLAN_OFFSET + 152,
+  "Declaration": OFFERING_PLAN_OFFSET + 242,
+  "DECLARATION": OFFERING_PLAN_OFFSET + 242,
+  "By-Laws": OFFERING_PLAN_OFFSET + 273,
+  "House Rules": OFFERING_PLAN_OFFSET + 307,
+  "HOUSE RULES AND REGULATIONS": OFFERING_PLAN_OFFSET + 307,
+  "Certifications": OFFERING_PLAN_OFFSET + 307,
+  "CERTIFICATIONS": OFFERING_PLAN_OFFSET + 307,
+};
+
+/**
  * Look up the zero-based PDF page index for a citation section string.
  * Handles formats like "Article II, Section 2.8" or "Section 2.8".
  */
-export function getPageForSection(section: string): number | null {
+export function getPageForSection(
+  section: string,
+  document: DocumentId = "bylaws",
+): number | null {
+  const map =
+    document === "offering-plan"
+      ? OFFERING_PLAN_SECTION_PAGE_MAP
+      : BYLAWS_SECTION_PAGE_MAP;
+
   // Direct match
-  if (section in SECTION_PAGE_MAP) return SECTION_PAGE_MAP[section];
+  if (section in map) return map[section];
 
-  // Try extracting "Section X.X" from strings like "Article II, Section 2.8"
-  const sectionMatch = section.match(/Section\s+[\d.]+/i);
-  if (sectionMatch && sectionMatch[0] in SECTION_PAGE_MAP) {
-    return SECTION_PAGE_MAP[sectionMatch[0]];
-  }
+  if (document === "bylaws") {
+    // Try extracting "Section X.X" from strings like "Article II, Section 2.8"
+    const sectionMatch = section.match(/Section\s+[\d.]+/i);
+    if (sectionMatch && sectionMatch[0] in map) {
+      return map[sectionMatch[0]];
+    }
 
-  // Try extracting "Article X" from strings like "Article II"
-  const articleMatch = section.match(/Article\s+[IVXLC]+/i);
-  if (articleMatch && articleMatch[0] in SECTION_PAGE_MAP) {
-    return SECTION_PAGE_MAP[articleMatch[0]];
+    // Try extracting "Article X" from strings like "Article II"
+    const articleMatch = section.match(/Article\s+[IVXLC]+/i);
+    if (articleMatch && articleMatch[0] in map) {
+      return map[articleMatch[0]];
+    }
+  } else {
+    // For offering plan, try case-insensitive partial matching
+    const sectionLower = section.toLowerCase();
+    for (const key of Object.keys(map)) {
+      if (key.toLowerCase() === sectionLower) return map[key];
+    }
+    // Try partial match (section name contained in key or vice versa)
+    for (const key of Object.keys(map)) {
+      if (
+        key.toLowerCase().includes(sectionLower) ||
+        sectionLower.includes(key.toLowerCase())
+      ) {
+        return map[key];
+      }
+    }
   }
 
   return null;
