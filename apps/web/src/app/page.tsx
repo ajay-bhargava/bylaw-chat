@@ -13,14 +13,21 @@ export default function Home() {
   const { data: session, isPending } = authClient.useSession();
   const [targetPage, setTargetPage] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<DocumentId>("bylaws");
+  const [highlightText, setHighlightText] = useState<string | null>(null);
 
-  const handleCitationClick = useCallback((section: string, document: DocumentId = "bylaws") => {
+  const handleCitationClick = useCallback((section: string, document: DocumentId = "bylaws", quotedText?: string) => {
     const page = getPageForSection(section, document);
     if (page !== null) {
       setActiveTab(document);
       // Reset then set so clicking the same section re-triggers navigation
       setTargetPage(null);
-      queueMicrotask(() => setTargetPage(page));
+      setHighlightText(null);
+      queueMicrotask(() => {
+        setTargetPage(page);
+        if (document === "offering-plan" && quotedText) {
+          setHighlightText(quotedText);
+        }
+      });
     }
   }, []);
 
@@ -46,6 +53,7 @@ export default function Home() {
           activeTab={activeTab}
           onTabChange={setActiveTab}
           targetPage={targetPage}
+          highlightText={highlightText}
         />
       </div>
     </div>

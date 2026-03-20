@@ -1,10 +1,14 @@
 import { anthropic } from "@ai-sdk/anthropic";
+import { api } from "@bylaw-chat/backend/convex/_generated/api";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
+import { ConvexHttpClient } from "convex/browser";
 
 import { BYLAWS_CONTENT } from "@/lib/bylaws_content";
-import { OFFERING_PLAN_CONTENT } from "@/lib/offering_plan_content";
 
-const systemPrompt = `You answer questions about The 1399 Park Avenue Condominium using two documents: the Bylaws and the Offering Plan.
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+
+function buildSystemPrompt(retrievedContext: string) {
+  return `You answer questions about The 1399 Park Avenue Condominium using two documents: the Bylaws and the Offering Plan.
 
 Rules:
 - Answer in 1-3 short sentences of plain English. No legalese, no filler, no preamble.
@@ -17,17 +21,34 @@ Rules:
 BYLAWS:
 ${BYLAWS_CONTENT}
 
-OFFERING PLAN:
-${OFFERING_PLAN_CONTENT}`;
+OFFERING PLAN (relevant excerpts retrieved via semantic search):
+${retrievedContext}`;
+}
 
 export async function POST(request: Request) {
   const { messages }: { messages: UIMessage[] } = await request.json();
 
+  const lastUserMessage = [...messages]
+    .reverse()
+    .find((m) => m.role === "user");
+
+  let query = "";
+  if (lastUserMessage) {
+    const parts = lastUserMessage.parts as Array<{ type: string; text?: string }>;
+    query = parts
+      .filter((p) => p.type === "text" && p.text)
+      .map((p) => p.text!)
+      .join(" ");
+  }
+
+  const { text: retrievedContext } = query.trim()
+    ? await convex.action(api.rag.searchOfferingPlan, { query })
+    : { text: "" };
+
   const result = streamText({
     model: anthropic("claude-sonnet-4-20250514"),
     messages: await convertToModelMessages(messages),
-    system: systemPrompt,
-    maxOutputTokens: 4096,
+    system: buildSystemPrompt(retrievedContext),
   });
 
   return result.toTextStreamResponse();

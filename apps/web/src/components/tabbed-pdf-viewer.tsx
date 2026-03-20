@@ -15,12 +15,14 @@ interface TabbedPdfViewerProps {
   activeTab: DocumentId;
   onTabChange: (tab: DocumentId) => void;
   targetPage: number | null;
+  highlightText: string | null;
 }
 
 export default function TabbedPdfViewer({
   activeTab,
   onTabChange,
   targetPage,
+  highlightText,
 }: TabbedPdfViewerProps) {
   return (
     <div className="flex h-full flex-col">
@@ -49,6 +51,7 @@ export default function TabbedPdfViewer({
             <PdfViewer
               fileUrl={tab.fileUrl}
               targetPage={activeTab === tab.id ? targetPage : null}
+              highlightText={activeTab === tab.id && tab.id === "offering-plan" ? highlightText : null}
             />
           </div>
         ))}

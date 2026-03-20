@@ -13,7 +13,7 @@ import type { DocumentId } from "@/lib/section-pages";
 import { Button } from "./ui/button";
 
 interface ChatPanelProps {
-  onCitationClick?: (section: string, document: DocumentId) => void;
+  onCitationClick?: (section: string, document: DocumentId, quotedText?: string) => void;
 }
 
 export default function ChatPanel({ onCitationClick }: ChatPanelProps) {
@@ -144,7 +144,7 @@ const VALID_DOCUMENTS = new Set(["bylaws", "offering-plan"]);
 
 function renderAssistantMessage(
   text: string,
-  onCitationClick?: (section: string, document: DocumentId) => void,
+  onCitationClick?: (section: string, document: DocumentId, quotedText?: string) => void,
 ) {
   // Match both 3-part [[cite: doc | section | text]] and 2-part [[cite: section | text]]
   const CITATION_REGEX = /\[\[cite:\s*([^|\]]+)\|\s*([^|\]]+)(?:\|\s*([^\]]+))?\]\]/g;
@@ -184,7 +184,7 @@ function renderAssistantMessage(
       <button
         key={`cite-${lastIndex}-${match.index}`}
         type="button"
-        onClick={() => onCitationClick?.(section, document)}
+        onClick={() => onCitationClick?.(section, document, quotedText)}
         className="my-1.5 block w-full cursor-pointer rounded border-l-2 border-primary/40 bg-primary/5 px-2.5 py-1.5 text-left hover:bg-primary/10 transition-colors"
       >
         <span className="text-xs font-medium text-primary">{icon}: {section}</span>

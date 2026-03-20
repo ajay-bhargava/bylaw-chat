@@ -44,5 +44,9 @@
   "lint-staged": {
     "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": ""
   },
+  "overrides": {
+    "convex": "1.33.1",
+    "convex-helpers": "0.1.114"
+  },
   "packageManager": "bun@1.3.10"
 }
