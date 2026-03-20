@@ -29,7 +29,7 @@ export default function Home() {
       setHighlightText(null);
       queueMicrotask(() => {
         setTargetPage(page);
-        if (document === "offering-plan" && quotedText) {
+        if ((document === "offering-plan" || document === "rules") && quotedText) {
           setHighlightText(quotedText);
         }
       });

@@ -1,5 +1,5 @@
 export interface Citation {
-  document: "bylaws" | "offering-plan";
+  document: "bylaws" | "offering-plan" | "rules";
   section: string;
   quotedText: string;
 }
@@ -9,7 +9,7 @@ const CITATION_REGEX_3 = /\[\[cite:\s*([^|]+)\|\s*([^|]+)\|\s*([^\]]+)\]\]/g;
 // 2-part (legacy): [[cite: section | text]]
 const CITATION_REGEX_2 = /\[\[cite:\s*([^|]+)\|\s*([^\]]+)\]\]/g;
 
-const VALID_DOCUMENTS = new Set(["bylaws", "offering-plan"]);
+const VALID_DOCUMENTS = new Set(["bylaws", "offering-plan", "rules"]);
 
 export function parseCitations(text: string): Citation[] {
   const citations: Citation[] = [];

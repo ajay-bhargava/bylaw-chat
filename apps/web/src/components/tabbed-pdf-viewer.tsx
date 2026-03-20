@@ -9,6 +9,7 @@ import PdfViewer from "./pdf-viewer-wrapper";
 const TABS: { id: DocumentId; label: string; fileUrl: string }[] = [
   { id: "bylaws", label: "Bylaws", fileUrl: "/bylaws/by-laws.pdf" },
   { id: "offering-plan", label: "Offering Plan", fileUrl: "/offering-plan/offering-plan.pdf" },
+  { id: "rules", label: "Rules", fileUrl: "/rules/rules.pdf" },
 ];
 
 interface TabbedPdfViewerProps {
@@ -51,7 +52,7 @@ export default function TabbedPdfViewer({
             <PdfViewer
               fileUrl={tab.fileUrl}
               targetPage={activeTab === tab.id ? targetPage : null}
-              highlightText={activeTab === tab.id && tab.id === "offering-plan" ? highlightText : null}
+              highlightText={activeTab === tab.id && (tab.id === "offering-plan" || tab.id === "rules") ? highlightText : null}
             />
           </div>
         ))}

@@ -23,7 +23,20 @@ export const ingestOfferingPlan = action({
   },
 });
 
-export const searchOfferingPlan = action({
+export const ingestRules = action({
+  args: { text: v.string() },
+  handler: async (ctx, { text }) => {
+    await rag.add(ctx, {
+      namespace: "condo-docs",
+      key: "rules",
+      title: "Rules and Regulations - 1399 Park Avenue Condominium",
+      text,
+    });
+    return { success: true };
+  },
+});
+
+export const searchDocuments = action({
   args: { query: v.string() },
   handler: async (ctx, { query }) => {
     const { text, results } = await rag.search(ctx, {

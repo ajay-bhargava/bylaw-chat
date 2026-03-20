@@ -72,7 +72,7 @@ export default function ChatPanel({ onCitationClick }: ChatPanelProps) {
         {messages.length === 0 && (
           <div className="flex h-full items-center justify-center">
             <p className="text-muted-foreground text-sm">
-              Ask a question about the bylaws or offering plan
+              Ask a question about the bylaws, offering plan, or rules
             </p>
           </div>
         )}
@@ -121,7 +121,7 @@ export default function ChatPanel({ onCitationClick }: ChatPanelProps) {
       <form onSubmit={handleSubmit} className="border-t p-4 flex gap-2">
         <input
           name="message"
-          placeholder="Ask about the bylaws or offering plan..."
+          placeholder="Ask about the bylaws, offering plan, or rules..."
           className="flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           disabled={isLoading}
           autoComplete="off"
@@ -140,7 +140,7 @@ export default function ChatPanel({ onCitationClick }: ChatPanelProps) {
   );
 }
 
-const VALID_DOCUMENTS = new Set(["bylaws", "offering-plan"]);
+const VALID_DOCUMENTS = new Set(["bylaws", "offering-plan", "rules"]);
 
 function renderAssistantMessage(
   text: string,
@@ -178,7 +178,7 @@ function renderAssistantMessage(
       quotedText = match[2].trim();
     }
 
-    const icon = document === "offering-plan" ? "📋 Offering Plan" : "📖 Bylaws";
+    const icon = document === "offering-plan" ? "📋 Offering Plan" : document === "rules" ? "📜 Rules" : "📖 Bylaws";
 
     parts.push(
       <button

@@ -8,20 +8,20 @@ import { BYLAWS_CONTENT } from "@/lib/bylaws_content";
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 function buildSystemPrompt(retrievedContext: string) {
-  return `You answer questions about The 1399 Park Avenue Condominium using two documents: the Bylaws and the Offering Plan.
+  return `You answer questions about The 1399 Park Avenue Condominium using three documents: the Bylaws, the Offering Plan, and the Rules and Regulations.
 
 Rules:
 - Answer in 1-3 short sentences of plain English. No legalese, no filler, no preamble.
 - Get straight to the point. Say what the documents require, allow, or prohibit.
-- After your answer, add 1-2 citations (only the most relevant). Format: [[cite: bylaws | Article X, Section X.X | exact quoted text]] or [[cite: offering-plan | Section Name | exact quoted text]]
-- The first part identifies the document (bylaws or offering-plan), the second part identifies the section, and the third part is the exact quoted text.
+- After your answer, add 1-2 citations (only the most relevant). Format: [[cite: bylaws | Article X, Section X.X | exact quoted text]] or [[cite: offering-plan | Section Name | exact quoted text]] or [[cite: rules | Article X, Section X.X | exact quoted text]]
+- The first part identifies the document (bylaws, offering-plan, or rules), the second part identifies the section, and the third part is the exact quoted text.
 - Do not repeat the question. Do not say "according to the bylaws" or "the offering plan states."
-- When questions span both documents, cross-reference and cite from both.
+- When questions span multiple documents, cross-reference and cite from all relevant ones.
 
 BYLAWS:
 ${BYLAWS_CONTENT}
 
-OFFERING PLAN (relevant excerpts retrieved via semantic search):
+OFFERING PLAN & RULES AND REGULATIONS (relevant excerpts retrieved via semantic search):
 ${retrievedContext}`;
 }
 
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
   }
 
   const { text: retrievedContext } = query.trim()
-    ? await convex.action(api.rag.searchOfferingPlan, { query })
+    ? await convex.action(api.rag.searchDocuments, { query })
     : { text: "" };
 
   const result = streamText({
