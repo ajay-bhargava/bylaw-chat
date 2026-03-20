@@ -1,4 +1,4 @@
-export type DocumentId = "bylaws" | "offering-plan";
+export type DocumentId = "bylaws" | "offering-plan" | "rules";
 
 /**
  * Maps bylaw section identifiers to zero-based PDF page indices.
@@ -189,6 +189,131 @@ const OFFERING_PLAN_SECTION_PAGE_MAP: Record<string, number> = {
 };
 
 /**
+ * Maps rules document section identifiers to zero-based PDF page indices.
+ */
+const RULES_SECTION_PAGE_MAP: Record<string, number> = {
+  "Article 1": 2,
+  "Section 1.1": 2,
+  "Section 1.2": 2,
+  "Article 2": 3,
+  "Section 2.1": 3,
+  "Section 2.2": 3,
+  "Section 2.3": 3,
+  "Section 2.4": 3,
+  "Section 2.5": 3,
+  "Section 2.6": 3,
+  "Article 3": 3,
+  "Section 3.1": 3,
+  "Section 3.2": 3,
+  "Section 3.3": 4,
+  "Section 3.4": 4,
+  "Section 3.5": 4,
+  "Section 3.6": 5,
+  "Section 3.7": 5,
+  "Section 3.8": 5,
+  "Section 3.9": 5,
+  "Section 3.10": 5,
+  "Section 3.11": 5,
+  "Section 3.12": 5,
+  "Section 3.13": 5,
+  "Section 3.14": 6,
+  "Section 3.15": 6,
+  "Section 3.16": 6,
+  "Section 3.17": 6,
+  "Section 3.18": 6,
+  "Article 4": 6,
+  "Section 4.1": 6,
+  "Section 4.2": 7,
+  "Section 4.3": 7,
+  "Section 4.4": 7,
+  "Section 4.5": 7,
+  "Article 5": 7,
+  "Section 5.1": 7,
+  "Section 5.2": 7,
+  "Section 5.3": 7,
+  "Section 5.4": 7,
+  "Section 5.5": 7,
+  "Section 5.6": 8,
+  "Section 5.7": 8,
+  "Section 5.8": 8,
+  "Section 5.9": 8,
+  "Section 5.10": 9,
+  "Section 5.11": 9,
+  "Article 6": 9,
+  "Section 6.1": 9,
+  "Section 6.2": 9,
+  "Article 7": 9,
+  "Section 7.1": 9,
+  "Section 7.2": 9,
+  "Section 7.3": 10,
+  "Section 7.4": 10,
+  "Section 7.5": 10,
+  "Article 8": 10,
+  "Section 8.1": 10,
+  "Section 8.2": 10,
+  "Section 8.3": 11,
+  "Section 8.4": 11,
+  "Section 8.5": 11,
+  "Article 9": 11,
+  "Section 9.1": 11,
+  "Section 9.2": 11,
+  "Section 9.3": 11,
+  "Section 9.4": 11,
+  "Section 9.5": 11,
+  "Section 9.6": 12,
+  "Section 9.7": 12,
+  "Section 9.8": 12,
+  "Section 9.9": 12,
+  "Section 9.10": 12,
+  "Section 9.11": 12,
+  "Article 10": 12,
+  "Section 10.1": 12,
+  "Section 10.2": 12,
+  "Section 10.3": 12,
+  "Section 10.4": 12,
+  "Section 10.5": 12,
+  "Section 10.6": 12,
+  "Section 10.7": 13,
+  "Section 10.8": 13,
+  "Section 10.9": 13,
+  "Section 10.10": 13,
+  "Section 10.11": 13,
+  "Article 11": 13,
+  "Section 11.1": 13,
+  "Section 11.2": 13,
+  "Section 11.3": 13,
+  "Section 11.4": 13,
+  "Section 11.5": 13,
+  "Section 11.6": 13,
+  "Section 11.7": 13,
+  "Section 11.8": 14,
+  "Section 11.9": 14,
+  "Section 11.10": 14,
+  "Section 11.11": 14,
+  "Section 11.12": 14,
+  "Section 11.13": 14,
+  "Section 11.14": 14,
+  "Section 11.15": 14,
+  "Section 11.16": 14,
+  "Section 11.17": 14,
+  "Section 11.18": 14,
+  "Article 12": 14,
+  "Section 12.1": 14,
+  "Article 13": 15,
+  "Section 13.1": 15,
+  "Section 13.2": 15,
+  "Section 13.3": 15,
+  "Section 13.4": 15,
+  "Section 13.5": 15,
+  "Section 13.6": 15,
+  "Section 13.7": 15,
+  "Section 13.8": 15,
+  "Article 14": 15,
+  "Section 14.1": 15,
+  "Section 14.2": 15,
+};
+
+/**
  * Look up the zero-based PDF page index for a citation section string.
  * Handles formats like "Article II, Section 2.8" or "Section 2.8".
  */
@@ -199,20 +324,22 @@ export function getPageForSection(
   const map =
     document === "offering-plan"
       ? OFFERING_PLAN_SECTION_PAGE_MAP
-      : BYLAWS_SECTION_PAGE_MAP;
+      : document === "rules"
+        ? RULES_SECTION_PAGE_MAP
+        : BYLAWS_SECTION_PAGE_MAP;
 
   // Direct match
   if (section in map) return map[section];
 
-  if (document === "bylaws") {
+  if (document === "bylaws" || document === "rules") {
     // Try extracting "Section X.X" from strings like "Article II, Section 2.8"
     const sectionMatch = section.match(/Section\s+[\d.]+/i);
     if (sectionMatch && sectionMatch[0] in map) {
       return map[sectionMatch[0]];
     }
 
-    // Try extracting "Article X" from strings like "Article II"
-    const articleMatch = section.match(/Article\s+[IVXLC]+/i);
+    // Try extracting "Article X" from strings like "Article II" or "Article 3"
+    const articleMatch = section.match(/Article\s+[\dIVXLC]+/i);
     if (articleMatch && articleMatch[0] in map) {
       return map[articleMatch[0]];
     }
