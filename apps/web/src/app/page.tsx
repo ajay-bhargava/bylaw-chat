@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageSquare, FileText } from "lucide-react";
+import { FileText, MessageSquare } from "lucide-react";
 import { useCallback, useState } from "react";
 
 import ChatPanel from "@/components/chat-panel";
@@ -9,6 +9,7 @@ import TabbedPdfViewer from "@/components/tabbed-pdf-viewer";
 import { authClient } from "@/lib/auth-client";
 import type { DocumentId } from "@/lib/section-pages";
 import { getPageForSection } from "@/lib/section-pages";
+import { cn } from "@/lib/utils";
 
 type MobileView = "chat" | "pdf";
 
@@ -19,26 +20,29 @@ export default function Home() {
   const [highlightText, setHighlightText] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<MobileView>("chat");
 
-  const handleCitationClick = useCallback((section: string, document: DocumentId = "bylaws", quotedText?: string) => {
-    const page = getPageForSection(section, document);
-    if (page !== null) {
-      setActiveTab(document);
-      setMobileView("pdf");
-      // Reset then set so clicking the same section re-triggers navigation
-      setTargetPage(null);
-      setHighlightText(null);
-      queueMicrotask(() => {
-        setTargetPage(page);
-        if ((document === "offering-plan" || document === "rules") && quotedText) {
-          setHighlightText(quotedText);
-        }
-      });
-    }
-  }, []);
+  const handleCitationClick = useCallback(
+    (section: string, document: DocumentId = "bylaws", quotedText?: string) => {
+      const page = getPageForSection(section, document);
+      if (page !== null) {
+        setActiveTab(document);
+        setMobileView("pdf");
+        // Reset then set so clicking the same section re-triggers navigation
+        setTargetPage(null);
+        setHighlightText(null);
+        queueMicrotask(() => {
+          setTargetPage(page);
+          if ((document === "offering-plan" || document === "rules") && quotedText) {
+            setHighlightText(quotedText);
+          }
+        });
+      }
+    },
+    [],
+  );
 
   if (isPending) {
     return (
-      <div className="flex items-center justify-center">
+      <div className="flex h-full items-center justify-center">
         <p className="text-muted-foreground">Loading...</p>
       </div>
     );
@@ -48,65 +52,83 @@ export default function Home() {
     return <GoogleSignIn />;
   }
 
+  // A single tree serves both layouts: side-by-side on md+, tab-switched on phones.
+  // Rendering one copy avoids duplicate chat state and duplicate PDF loads on mobile.
+  // Inactive views stay mounted (so PDFs keep their layout) but sit below the active
+  // one: PDF.js forces visibility:visible on its pages, so `invisible` alone isn't enough.
   return (
-    <>
-      {/* Desktop layout */}
-      <div className="hidden md:grid grid-cols-[1fr_2fr] h-full overflow-hidden">
-        <div className="border-r min-h-0">
+    <div className="flex h-full flex-col overflow-hidden md:grid md:grid-cols-[1fr_2fr]">
+      <div className="relative min-h-0 flex-1 md:contents">
+        <section
+          aria-label="Chat"
+          className={cn(
+            "absolute inset-0 bg-background md:static md:visible md:pointer-events-auto md:min-h-0 md:border-r",
+            mobileView === "chat" ? "z-10" : "invisible pointer-events-none z-0",
+          )}
+        >
           <ChatPanel onCitationClick={handleCitationClick} />
-        </div>
-        <div className="overflow-hidden">
+        </section>
+        <section
+          aria-label="Documents"
+          className={cn(
+            "absolute inset-0 bg-background md:static md:visible md:pointer-events-auto md:min-h-0 md:overflow-hidden",
+            mobileView === "pdf" ? "z-10" : "invisible pointer-events-none z-0",
+          )}
+        >
           <TabbedPdfViewer
             activeTab={activeTab}
             onTabChange={setActiveTab}
             targetPage={targetPage}
             highlightText={highlightText}
+            onBack={() => setMobileView("chat")}
           />
-        </div>
+        </section>
       </div>
 
-      {/* Mobile layout */}
-      <div className="flex flex-col h-full overflow-hidden md:hidden">
-        <div className="flex-1 min-h-0 overflow-hidden">
-          <div className={mobileView === "chat" ? "h-full" : "hidden"}>
-            <ChatPanel onCitationClick={handleCitationClick} />
-          </div>
-          <div className={mobileView === "pdf" ? "h-full" : "hidden"}>
-            <TabbedPdfViewer
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-              targetPage={targetPage}
-              highlightText={highlightText}
-            />
-          </div>
-        </div>
-        <div className="border-t flex">
-          <button
-            type="button"
-            onClick={() => setMobileView("chat")}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-colors ${
-              mobileView === "chat"
-                ? "text-primary bg-primary/5"
-                : "text-muted-foreground"
-            }`}
-          >
-            <MessageSquare className="h-4 w-4" />
-            Chat
-          </button>
-          <button
-            type="button"
-            onClick={() => setMobileView("pdf")}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-colors ${
-              mobileView === "pdf"
-                ? "text-primary bg-primary/5"
-                : "text-muted-foreground"
-            }`}
-          >
-            <FileText className="h-4 w-4" />
-            Documents
-          </button>
-        </div>
-      </div>
-    </>
+      <nav
+        aria-label="View"
+        className="flex border-t bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
+      >
+        <MobileTab
+          active={mobileView === "chat"}
+          onClick={() => setMobileView("chat")}
+          icon={<MessageSquare className="h-5 w-5" />}
+          label="Chat"
+        />
+        <MobileTab
+          active={mobileView === "pdf"}
+          onClick={() => setMobileView("pdf")}
+          icon={<FileText className="h-5 w-5" />}
+          label="Documents"
+        />
+      </nav>
+    </div>
+  );
+}
+
+function MobileTab({
+  active,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors touch-manipulation",
+        active ? "text-primary" : "text-muted-foreground",
+      )}
+    >
+      {icon}
+      {label}
+    </button>
   );
 }
