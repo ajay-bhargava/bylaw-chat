@@ -1,11 +1,14 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { api } from "@bylaw-chat/backend/convex/_generated/api";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
-import { ConvexHttpClient } from "convex/browser";
+import { fetchAction } from "convex/nextjs";
 
+import { getToken } from "@/lib/auth-server";
 import { BYLAWS_CONTENT } from "@/lib/bylaws_content";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+// Bound per-request cost: each call sends the full bylaws plus the conversation to Claude.
+const MAX_MESSAGES = 40;
+const MAX_TOTAL_CHARS = 100_000;
 
 function buildSystemPrompt(retrievedContext: string) {
   return `You answer questions about The 1399 Park Avenue Condominium using three documents: the Bylaws, the Offering Plan, and the Rules and Regulations.
@@ -26,7 +29,23 @@ ${retrievedContext}`;
 }
 
 export async function POST(request: Request) {
-  const { messages }: { messages: UIMessage[] } = await request.json();
+  const token = await getToken();
+  if (!token) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let messages: UIMessage[];
+  try {
+    ({ messages } = (await request.json()) as { messages: UIMessage[] });
+  } catch {
+    return Response.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  if (!Array.isArray(messages) || messages.length === 0 || messages.length > MAX_MESSAGES) {
+    return Response.json({ error: "Invalid messages" }, { status: 400 });
+  }
+  if (JSON.stringify(messages).length > MAX_TOTAL_CHARS) {
+    return Response.json({ error: "Conversation too long" }, { status: 413 });
+  }
 
   const lastUserMessage = [...messages]
     .reverse()
@@ -42,7 +61,7 @@ export async function POST(request: Request) {
   }
 
   const { text: retrievedContext } = query.trim()
-    ? await convex.action(api.rag.searchDocuments, { query })
+    ? await fetchAction(api.rag.searchDocuments, { query }, { token })
     : { text: "" };
 
   const result = streamText({
