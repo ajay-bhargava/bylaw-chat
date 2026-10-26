@@ -46,9 +46,13 @@ export async function POST(request: Request) {
     : { text: "" };
 
   const result = streamText({
-    model: anthropic("claude-sonnet-4-20250514"),
+    model: anthropic("claude-sonnet-5-5"),
     messages: await convertToModelMessages(messages),
     system: buildSystemPrompt(retrievedContext),
+    providerOptions: {
+      // Answers are 1-3 sentences; medium effort keeps latency low on mobile.
+      anthropic: { effort: "medium" },
+    },
   });
 
   return result.toTextStreamResponse();

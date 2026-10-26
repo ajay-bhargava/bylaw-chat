@@ -11,24 +11,26 @@ export default function Header() {
   const { data: session } = authClient.useSession();
 
   return (
-    <div>
-      <div className="flex flex-row items-center justify-between px-2 py-1">
-        <nav className="flex gap-4 text-lg">
-          <Link href="/" className="font-semibold">
+    <header className="border-b pt-[env(safe-area-inset-top)]">
+      <div className="flex min-h-12 flex-row items-center justify-between gap-2 px-3 py-1">
+        <nav className="flex min-w-0 gap-4 text-lg">
+          <Link href="/" className="truncate font-semibold">
             Bylaw Chat
           </Link>
         </nav>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1 md:gap-2">
           {session && (
             <>
-              <span className="text-sm text-muted-foreground">
+              <span className="hidden max-w-48 truncate text-sm text-muted-foreground sm:inline">
                 {session.user.name || session.user.email}
               </span>
               <Button
                 variant="ghost"
                 size="icon"
+                className="size-11 md:size-8"
                 onClick={() => authClient.signOut()}
                 title="Sign out"
+                aria-label="Sign out"
               >
                 <LogOut className="h-4 w-4" />
               </Button>
@@ -37,7 +39,6 @@ export default function Header() {
           <ModeToggle />
         </div>
       </div>
-      <hr />
-    </div>
+    </header>
   );
 }

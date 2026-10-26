@@ -5,12 +5,19 @@ import { api } from "@bylaw-chat/backend/convex/_generated/api";
 import { TextStreamChatTransport } from "ai";
 import { useMutation } from "convex/react";
 import { SendHorizontal } from "lucide-react";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Markdown from "react-markdown";
 
 import type { DocumentId } from "@/lib/section-pages";
 
 import { Button } from "./ui/button";
+
+const STARTER_QUESTIONS = [
+  "Can I sublet my unit?",
+  "Are pets allowed?",
+  "How are common charges decided?",
+  "What renovations need board approval?",
+];
 
 interface ChatPanelProps {
   onCitationClick?: (section: string, document: DocumentId, quotedText?: string) => void;
@@ -29,10 +36,24 @@ export default function ChatPanel({ onCitationClick }: ChatPanelProps) {
   const saveChatMessage = useMutation(api.chatMessages.save);
   const prevStatusRef = useRef(status);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [input, setInput] = useState("");
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    // Smooth-scrolling on every streamed chunk stutters on iOS; jump instantly while streaming.
+    messagesEndRef.current?.scrollIntoView({
+      behavior: status === "streaming" ? "auto" : "smooth",
+      block: "end",
+    });
+  }, [messages, status]);
+
+  // Auto-grow the textarea up to a few lines.
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+  }, [input]);
 
   // Save to Convex when streaming completes
   useEffect(() => {
@@ -54,26 +75,48 @@ export default function ChatPanel({ onCitationClick }: ChatPanelProps) {
     prevStatusRef.current = status;
   }, [status, messages, saveChatMessage]);
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const input = form.elements.namedItem("message") as HTMLInputElement;
-    const text = input.value.trim();
-    if (!text) return;
-    sendMessage({ text });
-    input.value = "";
+  const isLoading = status === "submitted" || status === "streaming";
+
+  function send(text: string) {
+    const trimmed = text.trim();
+    if (!trimmed || isLoading) return;
+    sendMessage({ text: trimmed });
+    setInput("");
   }
 
-  const isLoading = status === "submitted" || status === "streaming";
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    send(input);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    // Enter sends (the iOS keyboard shows "send"); Shift+Enter inserts a newline.
+    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+      e.preventDefault();
+      send(input);
+    }
+  }
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto overscroll-contain p-3 space-y-4 md:p-4">
         {messages.length === 0 && (
-          <div className="flex h-full items-center justify-center">
+          <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
             <p className="text-muted-foreground text-sm">
               Ask a question about the bylaws, offering plan, or rules
             </p>
+            <div className="flex max-w-sm flex-wrap justify-center gap-2">
+              {STARTER_QUESTIONS.map((q) => (
+                <button
+                  key={q}
+                  type="button"
+                  onClick={() => send(q)}
+                  className="min-h-10 rounded-full border px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted touch-manipulation"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
           </div>
         )}
         {messages.map((message) => (
@@ -82,7 +125,7 @@ export default function ChatPanel({ onCitationClick }: ChatPanelProps) {
             className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
+              className={`max-w-[90%] md:max-w-[85%] rounded-lg px-3 py-2 text-[15px] md:text-sm break-words ${
                 message.role === "user"
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted"
@@ -118,20 +161,41 @@ export default function ChatPanel({ onCitationClick }: ChatPanelProps) {
         )}
         <div ref={messagesEndRef} />
       </div>
-      <form onSubmit={handleSubmit} className="border-t p-4 flex gap-2">
-        <input
+      <form onSubmit={handleSubmit} className="border-t p-2 flex items-end gap-2 md:p-4">
+        {/* 16px text on mobile prevents iOS Safari from zooming on focus. Never disabled,
+            so the keyboard stays open while a response streams. */}
+        <textarea
+          ref={inputRef}
           name="message"
-          placeholder="Ask about the bylaws, offering plan, or rules..."
-          className="flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          disabled={isLoading}
+          rows={1}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Ask a question…"
+          aria-label="Message"
+          className="flex-1 resize-none rounded-md border bg-background px-3 py-2.5 text-base leading-6 md:text-sm md:leading-5 focus:outline-none focus:ring-2 focus:ring-ring"
           autoComplete="off"
+          enterKeyHint="send"
         />
         {isLoading ? (
-          <Button type="button" variant="outline" size="icon" onClick={() => stop()}>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="size-11 md:size-9"
+            onClick={() => stop()}
+            aria-label="Stop"
+          >
             ■
           </Button>
         ) : (
-          <Button type="submit" size="icon">
+          <Button
+            type="submit"
+            size="icon"
+            className="size-11 md:size-9"
+            disabled={!input.trim()}
+            aria-label="Send"
+          >
             <SendHorizontal className="h-4 w-4" />
           </Button>
         )}
@@ -185,7 +249,7 @@ function renderAssistantMessage(
         key={`cite-${lastIndex}-${match.index}`}
         type="button"
         onClick={() => onCitationClick?.(section, document, quotedText)}
-        className="my-1.5 block w-full cursor-pointer rounded border-l-2 border-primary/40 bg-primary/5 px-2.5 py-1.5 text-left hover:bg-primary/10 transition-colors"
+        className="my-1.5 block w-full cursor-pointer rounded border-l-2 border-primary/40 bg-primary/5 px-2.5 py-2 text-left hover:bg-primary/10 active:bg-primary/15 transition-colors touch-manipulation"
       >
         <span className="text-xs font-medium text-primary">{icon}: {section}</span>
         <span className="mt-0.5 block text-xs italic text-muted-foreground">

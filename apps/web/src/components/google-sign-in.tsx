@@ -17,7 +17,7 @@ export default function GoogleSignIn() {
   }
 
   return (
-    <div className="flex items-center justify-center h-full">
+    <div className="flex items-center justify-center h-full px-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Bylaw Chat</CardTitle>
